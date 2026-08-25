@@ -10,9 +10,9 @@ import (
 	"os/exec"
 	"runtime"
 
-	"aicp/internal/diffutil"
-	"aicp/internal/ops"
-	"aicp/internal/store"
+	"github.com/joeltjs/aicp/internal/diffutil"
+	"github.com/joeltjs/aicp/internal/ops"
+	"github.com/joeltjs/aicp/internal/store"
 )
 
 //go:embed static

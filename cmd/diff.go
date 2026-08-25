@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"aicp/internal/diffutil"
-	"aicp/internal/ops"
+	"github.com/joeltjs/aicp/internal/diffutil"
+	"github.com/joeltjs/aicp/internal/ops"
 
 	"github.com/spf13/cobra"
 )

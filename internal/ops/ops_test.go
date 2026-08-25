@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"aicp/internal/store"
+	"github.com/joeltjs/aicp/internal/store"
 )
 
 func testEnv(t *testing.T) string {

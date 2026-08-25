@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"aicp/internal/store"
+	"github.com/joeltjs/aicp/internal/store"
 	"github.com/pmezard/go-difflib/difflib"
 )
 
@@ -48,6 +48,32 @@ func isBinary(b []byte) bool {
 	return bytes.IndexByte(b, 0) >= 0
 }
 
+func makePatch(p string, status string, ob, nb []byte, oErr, nErr error) FileDiff {
+	d := FileDiff{Path: p, Status: status}
+	if oErr != nil || nErr != nil {
+		d.Binary = true
+		return d
+	}
+	if isBinary(ob) || isBinary(nb) {
+		d.Binary = true
+		return d
+	}
+	diff := difflib.UnifiedDiff{
+		A:        difflib.SplitLines(string(ob)),
+		B:        difflib.SplitLines(string(nb)),
+		FromFile: "a/" + p,
+		ToFile:   "b/" + p,
+		Context:  3,
+	}
+	txt, err := difflib.GetUnifiedDiffString(diff)
+	if err != nil {
+		d.Binary = true
+		return d
+	}
+	d.Patch = txt
+	return d
+}
+
 func DiffStates(oldMap, newMap map[string]store.FileInfo, oldRes, newRes Resolver) []FileDiff {
 	var out []FileDiff
 	paths := map[string]bool{}
@@ -68,41 +94,18 @@ func DiffStates(oldMap, newMap map[string]store.FileInfo, oldRes, newRes Resolve
 		nf, inNew := newMap[p]
 		switch {
 		case inOld && !inNew:
-			out = append(out, FileDiff{Path: p, Status: "D"})
+			ob, oerr := oldRes(of)
+			out = append(out, makePatch(p, "D", ob, nil, oerr, nil))
 		case !inOld && inNew:
-			out = append(out, FileDiff{Path: p, Status: "A"})
+			nb, nerr := newRes(nf)
+			out = append(out, makePatch(p, "A", nil, nb, nil, nerr))
 		default:
 			if of.Hash == nf.Hash && of.Kind == nf.Kind && of.Mode == nf.Mode {
 				continue
 			}
-			d := FileDiff{Path: p, Status: "M"}
 			ob, oerr := oldRes(of)
 			nb, nerr := newRes(nf)
-			if oerr != nil || nerr != nil {
-				d.Binary = true
-				d.Patch = ""
-				out = append(out, d)
-				continue
-			}
-			if isBinary(ob) || isBinary(nb) {
-				d.Binary = true
-				out = append(out, d)
-				continue
-			}
-			diff := difflib.UnifiedDiff{
-				A:        difflib.SplitLines(string(ob)),
-				B:        difflib.SplitLines(string(nb)),
-				FromFile: "a/" + p,
-				ToFile:   "b/" + p,
-				Context:  3,
-			}
-			txt, err := difflib.GetUnifiedDiffString(diff)
-			if err != nil {
-				d.Binary = true
-			} else {
-				d.Patch = txt
-			}
-			out = append(out, d)
+			out = append(out, makePatch(p, "M", ob, nb, oerr, nerr))
 		}
 	}
 	return out

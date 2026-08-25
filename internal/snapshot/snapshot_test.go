@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"aicp/internal/ignorex"
-	"aicp/internal/store"
+	"github.com/joeltjs/aicp/internal/ignorex"
+	"github.com/joeltjs/aicp/internal/store"
 )
 
 func setup(t *testing.T) (*store.Store, string) {

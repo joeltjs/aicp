@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"aicp/internal/web"
+	"github.com/joeltjs/aicp/internal/web"
 
 	"github.com/spf13/cobra"
 )

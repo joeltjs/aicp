@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"aicp/internal/ops"
+	"github.com/joeltjs/aicp/internal/ops"
 
 	"github.com/spf13/cobra"
 )

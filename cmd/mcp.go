@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"aicp/internal/mcpserver"
+	"github.com/joeltjs/aicp/internal/mcpserver"
 
 	"github.com/spf13/cobra"
 )

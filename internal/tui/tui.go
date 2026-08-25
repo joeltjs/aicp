@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"aicp/internal/diffutil"
-	"aicp/internal/ops"
-	"aicp/internal/store"
-	"aicp/internal/web"
+	"github.com/joeltjs/aicp/internal/diffutil"
+	"github.com/joeltjs/aicp/internal/ops"
+	"github.com/joeltjs/aicp/internal/store"
+	"github.com/joeltjs/aicp/internal/web"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"

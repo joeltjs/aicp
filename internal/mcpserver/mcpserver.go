@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"aicp/internal/diffutil"
-	"aicp/internal/ops"
+	"github.com/joeltjs/aicp/internal/diffutil"
+	"github.com/joeltjs/aicp/internal/ops"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"

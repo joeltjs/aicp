@@ -9,7 +9,7 @@ When you hand your working tree to an AI agent, you lose the ability to say "go 
 Requires Go 1.22 or newer.
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/joeltjs/aicp.git
 cd ai-checkpoint
 go install .
 ```
@@ -150,7 +150,7 @@ Pick the row that matches your agent:
 |---|---|
 | Kilo | `cp -r skills/auto-checkpoint ~/.config/kilo/skills/` |
 | Claude Code | `cp -r skills/auto-checkpoint ~/.claude/skills/` |
-| skills.sh ecosystem | `npx skills add <you>/ai-checkpoint@auto-checkpoint` |
+| skills.sh ecosystem | `npx skills add joeltjs/aicp@auto-checkpoint` |
 | Anything else | Point the agent at the file: *"Read and follow `skills/auto-checkpoint/SKILL.md` from this repo."* |
 
 ### Verifying it works

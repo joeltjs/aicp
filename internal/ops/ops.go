@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"aicp/internal/diffutil"
-	"aicp/internal/ignorex"
-	"aicp/internal/snapshot"
-	"aicp/internal/store"
+	"github.com/joeltjs/aicp/internal/diffutil"
+	"github.com/joeltjs/aicp/internal/ignorex"
+	"github.com/joeltjs/aicp/internal/snapshot"
+	"github.com/joeltjs/aicp/internal/store"
 )
 
 type AddModDel struct {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"aicp/internal/tui"
+	"github.com/joeltjs/aicp/internal/tui"
 
 	"github.com/spf13/cobra"
 )

@@ -1,6 +1,6 @@
 package main
 
-import "aicp/cmd"
+import "github.com/joeltjs/aicp/cmd"
 
 func main() {
 	cmd.Execute()

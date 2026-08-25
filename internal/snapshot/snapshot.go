@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strings"
 
-	"aicp/internal/ignorex"
-	"aicp/internal/store"
+	"github.com/joeltjs/aicp/internal/ignorex"
+	"github.com/joeltjs/aicp/internal/store"
 )
 
 func walkTree(root string, ig *ignorex.Ignorer, fn func(rel, kind string, mode uint32, content io.Reader) error) error {

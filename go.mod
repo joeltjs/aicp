@@ -1,4 +1,4 @@
-module aicp
+module github.com/joeltjs/aicp
 
 go 1.26.1
 
