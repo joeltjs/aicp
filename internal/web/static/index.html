@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aicp · checkpoints</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar">
+    <div class="brand"><span class="mark">aicp</span><span class="tagline">checkpoint browser</span></div>
+    <div class="proj" id="proj" title=""></div>
+  </header>
+
+  <div id="layout">
+    <aside id="side">
+      <div class="side-head">TIMELINE</div>
+      <div class="side-actions">
+        <button id="bSet" class="act primary" title="Snapshot kondisi sekarang sebagai checkpoint baru">+ set</button>
+        <button id="bStart" class="act" title="Start a new checkpoint session (baseline #0)">start</button>
+        <button id="bDrop" class="act danger" title="Delete the latest checkpoint (LIFO)">drop</button>
+        <button id="bReset" class="act danger" title="Delete ALL checkpoints (working tree stays untouched)">reset</button>
+      </div>
+      <ul id="cps"></ul>
+      <div id="side-empty" class="empty hidden">
+        <p>No checkpoints yet.</p>
+        <p class="dim">Click <code>start</code> above to capture a baseline, or run <code>aicp start</code>.</p>
+      </div>
+      <div id="side-err" class="error hidden"></div>
+    </aside>
+
+    <main id="main">
+      <div id="toolbar">
+        <label for="selA">from</label>
+        <select id="selA"></select>
+        <span class="arrow" aria-hidden="true">&#8594;</span>
+        <label for="selB">to</label>
+        <select id="selB"></select>
+        <button id="swap" class="ghost" type="button">Swap</button>
+        <button id="reload" class="ghost" type="button">Refresh</button>
+        <div class="flex1"></div>
+        <button id="bGoto" class="act hidden" title="Pulihkan working tree ke checkpoint ini (safety snapshot otomatis dibuat)">goto #<span id="gotoId"></span></button>
+        <button id="bGotoPurge" class="act danger hidden" title="Goto and delete every newer checkpoint. The safety snapshot is always kept">goto + purge</button>
+        <div class="flex1"></div>
+        <div id="stat" class="dim"></div>
+      </div>
+
+      <div id="err" class="error hidden"></div>
+
+      <section id="files" aria-label="changed files"></section>
+
+      <pre id="patch" class="hidden" tabindex="0"></pre>
+
+      <div id="files-empty" class="empty hidden">
+        <p>No differences between the selected states.</p>
+      </div>
+      <div id="loading" class="loading hidden">
+        <div class="skel w40"></div>
+        <div class="skel w70"></div>
+        <div class="skel w55"></div>
+      </div>
+    </main>
+  </div>
+
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
