@@ -142,7 +142,7 @@ The dashboard binds to `127.0.0.1` only, validates the `Host` header against a l
 
 `skills/auto-checkpoint/SKILL.md` teaches coding agents to checkpoint their own work: baseline before the first edit, one checkpoint per completed unit, a closing check before the session ends. No daemon, no file watcher, no switch inside aicp.
 
-### Importing the skill
+### 1. Importing the skill
 
 Pick the row that matches your agent:
 
@@ -153,7 +153,57 @@ Pick the row that matches your agent:
 | skills.sh ecosystem | `npx skills add joeltjs/aicp@auto-checkpoint` |
 | Anything else | Point the agent at the file: *"Read and follow `skills/auto-checkpoint/SKILL.md` from this repo."* |
 
-### Verifying it works
+### 2. Enforcing agent discipline automatically
+
+Skills teach agents *how* to checkpoint, but system prompt instructions ensure the agent *always executes* the discipline without manual prompting every time.
+
+#### Option A: Per-Project Instruction (Recommended)
+Place instructions in your project root using the standard instruction file for your agent:
+
+| Agent / Tool | Project Instruction File |
+|---|---|
+| **Kilo**, **Codex**, **OpenCode** | `AGENTS.md` |
+| **Claude Code** | `CLAUDE.md` |
+| **GitHub Copilot**, **VS Code** | `.github/copilot-instructions.md` |
+| **Cursor** | `.cursorrules` or `.cursor/rules/*.mdc` |
+| **Windsurf** | `.windsurfrules` |
+| **Aider**, **Pi**, **Generic Agents** | `CONVENTIONS.md` / `AGENTS.md` |
+
+**Add this content into the instruction file:**
+
+```markdown
+# Agent Instructions
+
+## Checkpointing Discipline (aicp)
+
+Always maintain `aicp` checkpoint discipline on any task modifying files:
+
+1. **Before the first edit:**
+   - Run `aicp status` (or `aicp start` if no session exists).
+2. **After completing a unit of work:**
+   - Run `aicp set -m "<imperative description>"` (max 50 characters, describe what changed).
+3. **Before finishing the turn/task:**
+   - Run `aicp status`. If uncheckpointed changes remain, run `aicp set -m "<description>"`.
+4. **On rollback request:**
+   - Run `aicp goto <id>`. Never delete history unless explicitly instructed.
+```
+
+#### Option B: Global Configuration (Across All Projects)
+To enforce discipline globally for every project:
+
+- **Kilo / OpenCode:**
+  Add a global instruction file in `~/.config/kilo/instructions/aicp.md` or register it in `~/.config/kilo/kilo.json`:
+  ```json
+  {
+    "instructions": ["~/.config/kilo/instructions/*.md"]
+  }
+  ```
+- **Claude Code:**
+  Add rules directly into `~/.claude/config.json` or global memory.
+- **GitHub Copilot / IDEs:**
+  Configure instructions in user settings under Custom Instructions.
+
+### 3. Verifying it works
 
 In any tracked project, ask the agent to make a small change, then run:
 
@@ -190,23 +240,73 @@ Manual `aicp set` remains available for edits made outside agent sessions; manua
 
 ## MCP server
 
-Agents that speak Model Context Protocol can drive aicp as typed tools instead of shell commands.
+Agents and IDEs that speak Model Context Protocol (MCP) can drive `aicp` directly through typed tools.
 
-Prerequisite: the binary must be installed (`go install .`) so the agent can spawn it.
+Prerequisite: the binary must be installed (`go install .` or binary in `PATH`) so the agent can spawn it.
 
-Register it with your agent:
+### Configuration per Agent / IDE
 
+#### 1. Cursor
+Go to **Settings** → **Features** → **MCP Servers** → **Add New MCP Server**, or add to `.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "aicp": { "command": "aicp", "args": ["mcp"] }
+    "aicp": {
+      "command": "aicp",
+      "args": ["mcp"]
+    }
   }
 }
 ```
 
-Where the file lives depends on the client. Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS, `%APPDATA%\Claude\claude_desktop_config.json` on Windows. Kilo and most CLI agents accept the same JSON in their MCP settings file. The spawned process runs in its own working directory, which becomes the tracked project, so launch your agent from inside the project folder or set `cwd` if the client supports it.
+#### 2. Windsurf (Codeium)
+Add to `~/.codeium/windsurf/mcp_config.json`:
+```json
+{
+  "mcpServers": {
+    "aicp": {
+      "command": "aicp",
+      "args": ["mcp"]
+    }
+  }
+}
+```
 
-Tools:
+#### 3. Claude Code / Claude Desktop
+- **Claude Code CLI:** Run `claude mcp add aicp aicp mcp`
+- **Claude Desktop:** Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+```json
+{
+  "mcpServers": {
+    "aicp": {
+      "command": "aicp",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+#### 4. Kilo / OpenCode
+Add to `~/.config/kilo/kilo.json` (or `.kilo/kilo.json`):
+```json
+{
+  "mcp": {
+    "aicp": {
+      "type": "local",
+      "command": ["aicp", "mcp"],
+      "enabled": true
+    }
+  }
+}
+```
+
+#### 5. Codex / VS Code / Other Tools
+Any client supporting stdio MCP servers can spawn:
+`command`: `aicp`, `args`: `["mcp"]`.
+
+> **Note on Working Directory:** The spawned MCP server process operates on its current working directory (`cwd`), which becomes the tracked project. Launch your agent/IDE from inside the project folder.
+
+### MCP Tools Provided
 
 | Tool | Notes |
 |---|---|
@@ -215,6 +315,13 @@ Tools:
 | `aicp_goto` | Restores state; optional `purge`; safety snapshot always kept |
 | `aicp_drop_latest` | History only; requires explicit user request |
 | `aicp_reset` | Requires `confirm: true` plus an explicit user request |
+
+### MCP Server vs Rules/Instructions: Which one is needed?
+
+- **MCP Server** gives the AI the **tools / capabilities** (e.g. `aicp_set`, `aicp_goto`) to execute checkpoints natively without running arbitrary bash commands. The MCP server includes built-in server instructions prompting the agent to checkpoint after each unit of work.
+- **Rules / Instructions (`AGENTS.md`, `.cursorrules`, `CLAUDE.md`)** enforce the **strict habit / timing** (telling the agent *never* to forget checkpointing before the first edit and after completing a task).
+
+Using both guarantees maximum discipline and reliability across any AI tool.
 
 ### Debugging the server
 
