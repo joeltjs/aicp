@@ -173,7 +173,7 @@ func (m Model) fetchPreview() tea.Cmd {
 		case mode == "working":
 			diffs, err = ops.DiffWorking(m.dir, sel)
 		case sel == 0:
-			diffs, err = ops.DiffFromEmpty(m.dir, 0)
+			return previewMsg{key: key, content: "Baseline checkpoint (initial snapshot).\nNo previous checkpoint to compare against.\nPress [tab] to view diff vs working tree."}
 		default:
 			diffs, err = ops.DiffCheckpoints(m.dir, sel-1, sel)
 		}
@@ -246,7 +246,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.vp.Width = msg.Width - 4
+		tableH := clamp(len(m.rows)+4, 6, maxInt(6, m.height*45/100))
+		m.vp.Width = maxInt(10, msg.Width-6)
+		m.vp.Height = clamp(m.height-tableH-9, 3, 60)
 		return m, nil
 
 	case bundleMsg:
@@ -435,12 +437,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.confirmMsg = fmt.Sprintf("Drop latest checkpoint #%d (%s)? The working tree will not change. y/n", latest.ID, latest.Message)
 				m.screen = screenConfirm
 				return m, nil
-			case "D":
+			case "D", "R", "e":
 				if m.sum.NoSession || len(m.rows) == 0 {
 					return m, nil
 				}
 				m.confirmKind = confirmReset
-				m.confirmMsg = "Delete ALL checkpoints? History is gone; the working tree stays untouched. y/n"
+				m.confirmMsg = "End session and delete ALL checkpoints? History is cleared; working tree stays untouched. y/n"
 				m.screen = screenConfirm
 				return m, nil
 			case "v":
@@ -454,6 +456,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			case "pgdown", "ctrl+d":
 				m.vp.HalfPageDown()
+				return m, nil
+			case "home":
+				m.vp.GotoTop()
+				return m, nil
+			case "end":
+				m.vp.GotoBottom()
+				return m, nil
+			case "[", "shift+up":
+				m.vp.LineUp(1)
+				return m, nil
+			case "]", "shift+down":
+				m.vp.LineDown(1)
 				return m, nil
 			}
 		}
@@ -482,15 +496,38 @@ func (m Model) previewKeyFor() string {
 func formatDiffs(diffs []diffutil.FileDiff) string {
 	var sb strings.Builder
 	for _, d := range diffs {
-		sb.WriteString(fmt.Sprintf("[%s] %s", d.Status, d.Path))
+		var tag string
+		switch d.Status {
+		case "A":
+			tag = addStyle.Render("[+]")
+		case "M":
+			tag = modStyle.Render("[~]")
+		case "D":
+			tag = delStyle.Render("[-]")
+		default:
+			tag = fmt.Sprintf("[%s]", d.Status)
+		}
+		sb.WriteString(fmt.Sprintf("%s %s", tag, d.Path))
 		if d.Binary {
-			sb.WriteString(" (binary)\n")
+			sb.WriteString(dimStyle.Render(" (binary)\n"))
 			continue
 		}
 		sb.WriteString("\n")
 		if d.Patch != "" {
-			sb.WriteString(d.Patch)
-			if !strings.HasSuffix(d.Patch, "\n") {
+			lines := strings.Split(strings.TrimRight(d.Patch, "\n"), "\n")
+			for _, l := range lines {
+				switch {
+				case strings.HasPrefix(l, "+++") || strings.HasPrefix(l, "---"):
+					sb.WriteString(faintStyle.Render(l))
+				case strings.HasPrefix(l, "@@"):
+					sb.WriteString(cyanStyle.Render(l))
+				case strings.HasPrefix(l, "+"):
+					sb.WriteString(addStyle.Render(l))
+				case strings.HasPrefix(l, "-"):
+					sb.WriteString(delStyle.Render(l))
+				default:
+					sb.WriteString(dimStyle.Render(l))
+				}
 				sb.WriteString("\n")
 			}
 		}
@@ -524,14 +561,15 @@ func (m Model) View() string {
 	if m.showHelp {
 		previewTitle = "help  (? or esc to close)"
 	} else if len(m.rows) > 0 {
+		selID := m.rows[m.cursor].M.ID
 		if m.previewPrev {
-			previewTitle = "preview: changes in selected checkpoint (tab: vs working)"
+			previewTitle = fmt.Sprintf("changes in #%d", selID)
 		} else {
-			previewTitle = "preview: selected vs working tree (tab: vs previous)"
+			previewTitle = fmt.Sprintf("diff #%d <-> working files", selID)
 		}
 	}
 	localVP := m.vp
-	localVP.Width = w - 6
+	localVP.Width = maxInt(10, w-6)
 	localVP.Height = clamp(m.height-tableH-9, 3, 60)
 	if m.showHelp {
 		lines := strings.Split(aicpHelpText, "\n")
@@ -544,7 +582,7 @@ func (m Model) View() string {
 	}
 	b.WriteString(borderStyle.Width(w - 2).Render(previewTitle+"\n"+previewBody) + "\n")
 
-	help := "↑/↓ select · tab preview mode · n set · g goto · G goto+purge · d drop · R reset-all · s start · v view · ? help · q quit"
+	help := "↑/↓ select · pgup/pgdn scroll · tab mode · n set · g goto · d drop · e/R end · s start · v web · ? help · q quit"
 	if m.screen == screenSetInput {
 		help = "checkpoint message: " + m.ti.View() + "   (enter save · esc cancel)"
 	} else if m.screen == screenConfirm {
@@ -625,7 +663,9 @@ func branchOrDash(b string) string {
 const aicpHelpText = `NAVIGATION
   ↑/k, ↓/j        select a checkpoint
   tab             switch preview mode (per-CP ↔ vs working tree)
-  pgup/pgdn       scroll preview
+  pgup/pgdn, ctrl+u/d   scroll preview half page
+  [/], shift+↑/↓        scroll preview line by line
+  home/end              scroll preview to top/bottom
   r               reload data
 
 OPERATIONS
@@ -634,7 +674,7 @@ OPERATIONS
   g               goto the selected checkpoint (auto safety snapshot)
   G               goto + purge: also delete every newer checkpoint
   d               drop the latest checkpoint only (LIFO)
-  R               reset: delete ALL checkpoints
+  e / R           end session & delete all checkpoints
   v               open the web dashboard in a browser
 
 SAFETY NOTES

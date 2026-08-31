@@ -65,12 +65,15 @@ func Serve(root string, port int) (string, error) {
 	}
 	mux.Handle("/", http.FileServer(http.FS(staticSub)))
 
-	handler := securityHeaders(hostAllowlist(csrfGuard(mux, port), port))
-
 	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		return "", err
 	}
+	actualPort := ln.Addr().(*net.TCPAddr).Port
+	s.port = actualPort
+
+	handler := securityHeaders(hostAllowlist(csrfGuard(mux, actualPort), actualPort))
+
 	go func() {
 		if err := http.Serve(ln, handler); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("aicp view server error: %v\n", err)
@@ -145,10 +148,19 @@ func (s *Server) handleCheckpoints(w http.ResponseWriter, r *http.Request) {
 		item := checkpointItem{
 			ID: m.ID, Time: m.Time.Format("2006-01-02 15:04"), Message: m.Message,
 			Branch: m.Branch, Auto: m.Auto, Latest: i == len(ms)-1, Files: len(m.Files),
+			Added: []string{}, Modified: []string{}, Deleted: []string{},
 		}
 		if i > 0 {
 			amd := ops.Classify(ops.ManifestMap(ms[i-1].Files), ops.ManifestMap(m.Files))
-			item.Added, item.Modified, item.Deleted = amd.Added, amd.Modified, amd.Deleted
+			if amd.Added != nil {
+				item.Added = amd.Added
+			}
+			if amd.Modified != nil {
+				item.Modified = amd.Modified
+			}
+			if amd.Deleted != nil {
+				item.Deleted = amd.Deleted
+			}
 		}
 		items = append(items, item)
 	}
@@ -183,7 +195,11 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if a < 0 {
-			diffs, err = ops.DiffFromEmpty(s.st.ProjectRoot, b)
+			if b == 0 {
+				diffs = []diffutil.FileDiff{}
+			} else {
+				diffs, err = ops.DiffFromEmpty(s.st.ProjectRoot, b)
+			}
 		} else {
 			diffs, err = ops.DiffCheckpoints(s.st.ProjectRoot, a, b)
 		}

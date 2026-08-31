@@ -63,12 +63,16 @@ function renderTimeline() {
       (cp.auto ? '<span class="badge auto">auto</span>' : "") +
       (cp.latest ? '<span class="badge latest">latest</span>' : "");
 
+    const aLen = (cp.added && Array.isArray(cp.added)) ? cp.added.length : 0;
+    const mLen = (cp.modified && Array.isArray(cp.modified)) ? cp.modified.length : 0;
+    const dLen = (cp.deleted && Array.isArray(cp.deleted)) ? cp.deleted.length : 0;
+
     const counts =
-      cp.added || cp.modified || cp.deleted
+      (aLen > 0 || mLen > 0 || dLen > 0)
         ? '<span class="counts">' +
-          '<span class="cnt-a">+' + cp.added.length + "</span>" +
-          '<span class="cnt-m">~' + cp.modified.length + "</span>" +
-          '<span class="cnt-d">-' + cp.deleted.length + "</span></span>"
+          '<span class="cnt-a">+' + aLen + "</span>" +
+          '<span class="cnt-m">~' + mLen + "</span>" +
+          '<span class="cnt-d">-' + dLen + "</span></span>"
         : "";
 
     li.innerHTML =
@@ -135,7 +139,8 @@ function setRange(a, b) {
 function selectCheckpoint(id) {
   state.sel = id;
   renderTimeline();
-  setRange(prevOf(id) ?? "none", id);
+  const prev = prevOf(id);
+  setRange(prev ?? "none", id);
   loadDiff();
   refreshGotoButtons();
 }
@@ -334,9 +339,9 @@ $("bDrop").onclick = async () => {
 
 $("bReset").onclick = async () => {
   if (!state.cps.length) { showError("No checkpoints yet."); return; }
-  if (!confirm("Delete ALL checkpoints?\nRollback history is gone. The working tree is NOT touched.")) return;
+  if (!confirm("End session and delete ALL checkpoints?\nRollback history is cleared. The working tree is NOT touched.")) return;
   const d = await mutate("/api/reset");
-  if (d) toastMsg("All checkpoints deleted");
+  if (d) toastMsg("Session ended. All checkpoints deleted");
 };
 
 function selectedId() {
