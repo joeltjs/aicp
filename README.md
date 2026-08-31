@@ -24,21 +24,20 @@ aicp start          # capture baseline checkpoint #0
 
 # ... let the AI loose on your code ...
 
-aicp set "after auth refactor"
+aicp set -m "after auth refactor"
 # ... more AI changes ...
 
 aicp goto 1         # working tree is now identical to checkpoint #1
-aicp reset -y       # happy with the result? wipe all checkpoints
+aicp end -y         # happy with the result? end session & wipe all checkpoints (or: aicp reset -y)
 ```
 
 Run `aicp` with no arguments for the interactive terminal UI: a checkpoint table with an inline diff preview, and every operation on keys.
 
 ```text
-↑/↓ select · tab preview mode · n set · g goto · G goto+purge
-d drop latest · R reset all · s start · v dashboard · r refresh · q quit
+↑/↓ select · pgup/pgdn scroll · tab mode · n set · g goto · d drop · e/R end · s start · v web · ? help · q quit
 ```
 
-The same operations exist in the web dashboard: `+ set`, `start`, `drop`, `reset` live above the timeline, and `goto` / `goto + purge` appear once you select a checkpoint.
+The same operations exist in the web dashboard: `+ set`, `start`, `drop`, `end` live above the timeline, and `goto` / `goto + purge` appear once you select a checkpoint.
 
 ## Commands
 
@@ -53,7 +52,7 @@ The same operations exist in the web dashboard: `+ set`, `start`, `drop`, `reset
 | `aicp goto N --purge` | Restore to checkpoint N and delete every newer checkpoint (an automatic safety snapshot of the discarded state is always kept first) |
 | `aicp diff [a] [b]` | Unified diff between checkpoints or against the working tree |
 | `aicp drop [-y]` | Delete the latest checkpoint only. The working tree never changes |
-| `aicp reset [-y]` | Delete every checkpoint. The working tree never changes |
+| `aicp end [-y]` / `aicp reset [-y]` | End session and delete all checkpoints. The working tree never changes |
 | `aicp view [--port N]` | Local web dashboard for browsing diffs |
 
 ## Inspecting changes
@@ -314,7 +313,7 @@ Any client supporting stdio MCP servers can spawn:
 | `aicp_set` | Creates a checkpoint (append-only) |
 | `aicp_goto` | Restores state; optional `purge`; safety snapshot always kept |
 | `aicp_drop_latest` | History only; requires explicit user request |
-| `aicp_reset` | Requires `confirm: true` plus an explicit user request |
+| `aicp_reset` | End session & delete all checkpoints; requires `confirm: true` plus an explicit user request |
 
 ### MCP Server vs Rules/Instructions: Which one is needed?
 

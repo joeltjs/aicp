@@ -140,7 +140,12 @@ function selectCheckpoint(id) {
   state.sel = id;
   renderTimeline();
   const prev = prevOf(id);
-  setRange(prev ?? "none", id);
+  if (prev !== null) {
+    setRange(prev, id);
+  } else {
+    // If only baseline exists, show diff against current workspace
+    setRange(id, "working");
+  }
   loadDiff();
   refreshGotoButtons();
 }

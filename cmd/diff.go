@@ -94,11 +94,11 @@ func printDiffLine(l string) {
 	case strings.HasPrefix(l, "+++"), strings.HasPrefix(l, "---"):
 		fmt.Println(dim(l))
 	case strings.HasPrefix(l, "@@"):
-		fmt.Println(cyan(l))
+		fmt.Println(diffHunk(l))
 	case strings.HasPrefix(l, "+"):
-		fmt.Println(green(l))
+		fmt.Println(diffAdd(l))
 	case strings.HasPrefix(l, "-"):
-		fmt.Println(red(l))
+		fmt.Println(diffDel(l))
 	default:
 		fmt.Println(dim(l))
 	}

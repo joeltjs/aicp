@@ -32,6 +32,9 @@ var (
 	addStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("114"))
 	modStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("179"))
 	delStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
+	diffAddLine  = lipgloss.NewStyle().Foreground(lipgloss.Color("120")).Background(lipgloss.Color("22"))
+	diffDelLine  = lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Background(lipgloss.Color("52"))
+	diffHunkLine = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Background(lipgloss.Color("236"))
 	headStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("243"))
 	sepLineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238"))
 )
@@ -173,7 +176,7 @@ func (m Model) fetchPreview() tea.Cmd {
 		case mode == "working":
 			diffs, err = ops.DiffWorking(m.dir, sel)
 		case sel == 0:
-			return previewMsg{key: key, content: "Baseline checkpoint (initial snapshot).\nNo previous checkpoint to compare against.\nPress [tab] to view diff vs working tree."}
+			diffs, err = ops.DiffWorking(m.dir, 0)
 		default:
 			diffs, err = ops.DiffCheckpoints(m.dir, sel-1, sel)
 		}
@@ -520,11 +523,11 @@ func formatDiffs(diffs []diffutil.FileDiff) string {
 				case strings.HasPrefix(l, "+++") || strings.HasPrefix(l, "---"):
 					sb.WriteString(faintStyle.Render(l))
 				case strings.HasPrefix(l, "@@"):
-					sb.WriteString(cyanStyle.Render(l))
+					sb.WriteString(diffHunkLine.Render(l))
 				case strings.HasPrefix(l, "+"):
-					sb.WriteString(addStyle.Render(l))
+					sb.WriteString(diffAddLine.Render(l))
 				case strings.HasPrefix(l, "-"):
-					sb.WriteString(delStyle.Render(l))
+					sb.WriteString(diffDelLine.Render(l))
 				default:
 					sb.WriteString(dimStyle.Render(l))
 				}

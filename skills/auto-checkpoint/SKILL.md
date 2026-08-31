@@ -60,11 +60,11 @@ aicp set -m "keep state from #3"
 
 Do not pin automatically on every rollback; only after explicit confirmation.
 
-## 5. Forbidden without an explicit request in the current message
+## 5. Cleaning up / ending session
 
 ```bash
+aicp end      # or: aicp reset (deletes all checkpoints)
 aicp drop     # deletes the latest checkpoint
-aicp reset    # deletes ALL checkpoints
 ```
 
 These erase history. If the user asks to clean up, confirm once, then run them exactly as asked and report what was freed.

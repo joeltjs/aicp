@@ -10,12 +10,12 @@
   --faint: #5a5f6a;
   --accent: #5aa7f0;
   --accent-soft: rgba(90, 167, 240, 0.12);
-  --add: #46b571;
-  --add-bg: rgba(70, 181, 113, 0.08);
-  --mod: #cf9f30;
-  --mod-bg: rgba(207, 159, 48, 0.09);
-  --del: #dd6161;
-  --del-bg: rgba(221, 97, 97, 0.08);
+  --add: #3fb950;
+  --add-bg: rgba(63, 185, 80, 0.16);
+  --mod: #d29922;
+  --mod-bg: rgba(210, 153, 34, 0.16);
+  --del: #f85149;
+  --del-bg: rgba(248, 81, 73, 0.16);
   --r-ctl: 6px;
   --r-panel: 10px;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
